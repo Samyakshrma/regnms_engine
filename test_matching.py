@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 from app.matching_engine import MatchingEngine
@@ -17,7 +17,7 @@ def reset_engine():
 def make_order(**kwargs):
     return Order(
         id=kwargs.get("id", str(uuid.uuid4())),
-        timestamp=kwargs.get("timestamp", datetime.utcnow()),
+        timestamp=kwargs.get("timestamp", datetime.now(UTC)),
         symbol=kwargs["symbol"],
         order_type=kwargs["order_type"],
         side=kwargs["side"],
