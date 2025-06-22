@@ -28,8 +28,11 @@ async def submit_order(order_data: OrderRequest):
     trades = engine.match_order(order)
     
     # Trigger push to clients
-    asyncio.create_task(broadcast_orderbook())
-    asyncio.create_task(broadcast_trades(trades))
+    await asyncio.gather(
+        broadcast_orderbook(),
+        broadcast_trades(trades)
+    )
+
     
     return {"order_id": order.id, "trades": [t.__dict__ for t in trades]}
 
@@ -81,7 +84,16 @@ async def broadcast_trades(trades):
     for trade in trades:
         for client in trade_clients:
             try:
-                await client.send_json(trade.__dict__)
+                await client.send_json(serialize_trade(trade))
             except WebSocketDisconnect:
                 dead_clients.add(client)
     trade_clients.difference_update(dead_clients)
+
+from datetime import datetime
+
+def serialize_trade(trade):
+    data = trade.__dict__.copy()
+    for key, value in data.items():
+        if isinstance(value, datetime):
+            data[key] = value.isoformat()
+    return data
